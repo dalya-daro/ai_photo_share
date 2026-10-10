@@ -38,7 +38,7 @@ Build these first, in this order. Each item is a small piece of work.
 
 ### 2. User registration
 
-- Show a sign-up form: **username** and **password** only.
+- Show a sign-up form: **username**, **password** and **email**.
 - Save a new user in the database.
 - Do not save the password as plain text (hash it).
 - If the username is already taken, show a clear error.
