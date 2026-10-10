@@ -1,0 +1,13 @@
+---
+description: Core implementation rules for the Photo Share Flask application.
+alwaysApply: true
+---
+
+# Photo Share core rules
+
+- Use Flask, Peewee, and SQLite. Do not switch to another web framework, ORM, database, or frontend framework unless explicitly requested.
+- Implement only the requested scope. Break work into small, independently working functions and changes; do not bundle optional or unrelated features into a task.
+- Never place secrets, API keys, passwords, tokens, or other confidential information in source code, templates, commits, or documentation.
+- Save uploaded images in the project-root `uploads/` directory. Never store uploads under `static/`.
+- Keep implementation simple and beginner-friendly. Follow the established routes, models, validation, and access-control behavior.
+- Read `docs/ai_context.md` and `docs/coding_rules.md` before making implementation decisions; they are the detailed source of truth for this project.
