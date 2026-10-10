@@ -17,6 +17,10 @@ instance/
 *.sqlite
 *.sqlite3
 
+# Uploaded post images (keep the directory placeholder)
+uploads/posts/*
+!uploads/posts/.gitkeep
+
 # Automated testing
 .pytest_cache/
 .coverage
@@ -25,4 +29,3 @@ htmlcov/
 # Operating system files
 .DS_Store
 Thumbs.db
-
