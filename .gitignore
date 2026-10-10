@@ -1,1 +1,28 @@
+
+# Python virtual environment
 .venv/
+
+# Environment variables and secrets
+.env
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+
+# Flask instance data
+instance/
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Automated testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
