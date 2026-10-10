@@ -1,8 +1,23 @@
 from datetime import datetime
+import os
 from pathlib import Path
 
-from flask import Flask, render_template
-from peewee import AutoField, CharField, DateTimeField, ForeignKeyField, Model, SqliteDatabase
+from flask import Flask, flash, redirect, render_template, url_for
+from flask_login import LoginManager, UserMixin, current_user, login_required, login_user, logout_user
+from flask_wtf import FlaskForm
+from flask_wtf.csrf import CSRFProtect
+from peewee import (
+    AutoField,
+    CharField,
+    DateTimeField,
+    ForeignKeyField,
+    IntegrityError,
+    Model,
+    SqliteDatabase,
+)
+from werkzeug.security import check_password_hash, generate_password_hash
+from wtforms import PasswordField, StringField, SubmitField
+from wtforms.validators import DataRequired, Email, EqualTo, Length
 
 
 PROJECT_DIRECTORY = Path(__file__).resolve().parent
@@ -14,7 +29,7 @@ class BaseModel(Model):
         database = database
 
 
-class User(BaseModel):
+class User(UserMixin, BaseModel):
     id = AutoField()
     username = CharField(max_length=80, unique=True)
     email = CharField(max_length=255, unique=True)
@@ -30,6 +45,51 @@ class Post(BaseModel):
 
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY")
+
+if not app.config["SECRET_KEY"]:
+    raise RuntimeError("Set the SECRET_KEY environment variable before starting the app.")
+
+csrf = CSRFProtect(app)
+login_manager = LoginManager(app)
+login_manager.login_view = "login"
+
+
+class RegistrationForm(FlaskForm):
+    username = StringField("Username", validators=[DataRequired(), Length(max=80)])
+    email = StringField(
+        "Email",
+        validators=[DataRequired(), Email(check_deliverability=False), Length(max=255)],
+    )
+    password = PasswordField("Password", validators=[DataRequired(), Length(min=8, max=128)])
+    confirm_password = PasswordField(
+        "Confirm password",
+        validators=[DataRequired(), EqualTo("password", message="Passwords must match.")],
+    )
+    submit = SubmitField("Register")
+
+
+class LoginForm(FlaskForm):
+    username = StringField("Username", validators=[DataRequired(), Length(max=80)])
+    password = PasswordField("Password", validators=[DataRequired()])
+    submit = SubmitField("Log in")
+
+
+def initialize_database():
+    database.connect(reuse_if_open=True)
+    database.create_tables([User], safe=True)
+    database.close()
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    try:
+        return User.get_or_none(User.id == int(user_id))
+    except ValueError:
+        return None
+
+
+initialize_database()
 
 
 @app.before_request
@@ -46,6 +106,63 @@ def close_database(exception=None):
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for("index"))
+
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        username = form.username.data.strip()
+        email = form.email.data.strip().lower()
+
+        if User.get_or_none(User.username == username):
+            form.username.errors.append("That username is already taken.")
+        elif User.get_or_none(User.email == email):
+            form.email.errors.append("That email address is already registered.")
+        else:
+            try:
+                user = User.create(
+                    username=username,
+                    email=email,
+                    password=generate_password_hash(form.password.data),
+                )
+            except IntegrityError:
+                flash("That username or email address is already registered.", "error")
+            else:
+                login_user(user)
+                flash("Registration complete.", "success")
+                return redirect(url_for("index"))
+
+    return render_template("register.html", form=form)
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for("index"))
+
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.get_or_none(User.username == form.username.data.strip())
+        if user and check_password_hash(user.password, form.password.data):
+            login_user(user)
+            flash("You are now logged in.", "success")
+            return redirect(url_for("index"))
+
+        flash("Invalid username or password.", "error")
+
+    return render_template("login.html", form=form)
+
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash("You are now logged out.", "success")
+    return redirect(url_for("index"))
 
 
 if __name__ == "__main__":

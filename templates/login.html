@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Log in | Photo Sharing App</title>
+  </head>
+  <body>
+    <h1>Log in</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <p>{{ message }}</p>
+      {% endfor %}
+    {% endwith %}
+    <form method="post">
+      {{ form.hidden_tag() }}
+      <p>{{ form.username.label }}<br>{{ form.username() }}</p>
+      {% for error in form.username.errors %}<p>{{ error }}</p>{% endfor %}
+      <p>{{ form.password.label }}<br>{{ form.password() }}</p>
+      {% for error in form.password.errors %}<p>{{ error }}</p>{% endfor %}
+      <p>{{ form.submit() }}</p>
+    </form>
+    <p><a href="{{ url_for('register') }}">Need an account? Register</a></p>
+    <p><a href="{{ url_for('index') }}">Back to home</a></p>
+  </body>
+</html>
